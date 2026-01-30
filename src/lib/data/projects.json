@@ -1,0 +1,38 @@
+[
+    {
+        "id": "airport-simulation",
+        "title": "Airport Simulation",
+        "description": "A Java application that simulates airport events happening concurrently, demonstrating multi-threading and real-time event processing.",
+        "tags": [
+            "Java",
+            "Multithreading",
+            "Simulation"
+        ],
+        "image": "/projects/airport-simulation.png",
+        "link": "https://github.com/XJ-Ong/AirportSimulation"
+    },
+    {
+        "id": "apoms-procurement",
+        "title": "APOMS Procurement",
+        "description": "Java GUI application illustrating standard procurement workflows with 5 roles: Admin, Sales, Purchase, Finance, and Inventory Manager.",
+        "tags": [
+            "Java",
+            "GUI",
+            "Business Process"
+        ],
+        "image": "/projects/apoms-procurement.png",
+        "link": "https://github.com/XJ-Ong/APOMS-Procurement"
+    },
+    {
+        "id": "hospital-patient-care",
+        "title": "Hospital Patient Care",
+        "description": "C++ system managing hospital operations with custom data structures: priority queues for emergencies, circular queues for ambulances, and stacks for specialists.",
+        "tags": [
+            "C++",
+            "Data Structures",
+            "Healthcare"
+        ],
+        "image": "/projects/hospital-patient-care.png",
+        "link": "https://github.com/XJ-Ong/Hospital-Patient-Care-Management-System"
+    }
+]

@@ -1,0 +1,179 @@
+@import "tailwindcss";
+
+@plugin "daisyui" {
+  themes: cyberpunk --default;
+}
+
+/* Custom Theme Colors */
+@theme {
+  /* Background colors */
+  --color-void-black: #050505;
+  --color-charcoal: #1a1a1a;
+
+  /* Accent colors */
+  --color-cyber-blue: #00f0ff;
+  --color-neon-red: #ff003c;
+  --color-deep-purple: #7000df;
+
+  /* Text colors */
+  --color-cool-grey: #a0a0a0;
+
+  /* Font families */
+  --font-sans: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+/* Override DaisyUI cyberpunk yellow background */
+html,
+body {
+  background-color: var(--color-void-black) !important;
+}
+
+/* Global Styles */
+body {
+  color: white;
+  font-family: var(--font-sans);
+}
+
+/* ========================================
+   Futuristic Custom Scrollbar
+   ======================================== */
+
+/* Webkit browsers (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-void-black);
+  border-left: 1px solid rgba(0, 240, 255, 0.1);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg,
+      var(--color-deep-purple) 0%,
+      var(--color-cyber-blue) 50%,
+      var(--color-deep-purple) 100%);
+  border-radius: 4px;
+  box-shadow: 0 0 8px var(--color-cyber-blue), 0 0 4px rgba(0, 240, 255, 0.5);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg,
+      var(--color-cyber-blue) 0%,
+      var(--color-deep-purple) 50%,
+      var(--color-cyber-blue) 100%);
+  box-shadow: 0 0 12px var(--color-cyber-blue), 0 0 6px rgba(0, 240, 255, 0.8);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-cyber-blue) var(--color-void-black);
+}
+
+/* Glassmorphism Utility */
+.glass {
+  background: rgba(26, 26, 26, 0.6);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Glowing Border Utility */
+.glow-cyan {
+  box-shadow: 0 0 10px var(--color-cyber-blue), 0 0 20px rgba(0, 240, 255, 0.3);
+  border-color: var(--color-cyber-blue);
+}
+
+.glow-purple {
+  box-shadow: 0 0 10px var(--color-deep-purple), 0 0 20px rgba(112, 0, 223, 0.3);
+  border-color: var(--color-deep-purple);
+}
+
+.glow-red {
+  box-shadow: 0 0 10px var(--color-neon-red), 0 0 20px rgba(255, 0, 60, 0.3);
+  border-color: var(--color-neon-red);
+}
+
+/* Glitch Text Effect */
+/* Improved Glitch Text Effect */
+.glitch {
+  position: relative;
+  color: white;
+  mix-blend-mode: lighten;
+}
+
+.glitch::before,
+.glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  width: 100%;
+  background: var(--color-void-black);
+  clip: rect(0, 0, 0, 0);
+}
+
+.glitch::before {
+  left: -2px;
+  text-shadow: 2px 0 var(--color-neon-red);
+  animation: glitch-anim-1 2s infinite linear alternate-reverse;
+}
+
+.glitch::after {
+  left: 2px;
+  text-shadow: -2px 0 var(--color-cyber-blue);
+  animation: glitch-anim-2 3s infinite linear alternate-reverse;
+}
+
+@keyframes glitch-anim-1 {
+  0% {
+    clip: rect(20px, 9999px, 15px, 0);
+  }
+
+  20% {
+    clip: rect(65px, 9999px, 89px, 0);
+  }
+
+  40% {
+    clip: rect(3px, 9999px, 95px, 0);
+  }
+
+  60% {
+    clip: rect(48px, 9999px, 12px, 0);
+  }
+
+  80% {
+    clip: rect(82px, 9999px, 36px, 0);
+  }
+
+  100% {
+    clip: rect(56px, 9999px, 7px, 0);
+  }
+}
+
+@keyframes glitch-anim-2 {
+  0% {
+    clip: rect(85px, 9999px, 18px, 0);
+  }
+
+  20% {
+    clip: rect(12px, 9999px, 73px, 0);
+  }
+
+  40% {
+    clip: rect(44px, 9999px, 32px, 0);
+  }
+
+  60% {
+    clip: rect(28px, 9999px, 91px, 0);
+  }
+
+  80% {
+    clip: rect(67px, 9999px, 4px, 0);
+  }
+
+  100% {
+    clip: rect(9px, 9999px, 55px, 0);
+  }
+}

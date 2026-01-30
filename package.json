@@ -1,0 +1,33 @@
+{
+	"name": "mywebsite",
+	"private": true,
+	"version": "0.0.1",
+	"type": "module",
+	"scripts": {
+		"dev": "vite dev",
+		"build": "vite build",
+		"preview": "vite preview",
+		"prepare": "svelte-kit sync || echo ''",
+		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
+	},
+	"devDependencies": {
+		"@sveltejs/adapter-auto": "^7.0.0",
+		"@sveltejs/adapter-netlify": "^5.2.4",
+		"@sveltejs/kit": "^2.50.1",
+		"@sveltejs/vite-plugin-svelte": "^6.2.4",
+		"@tailwindcss/vite": "^4.1.18",
+		"@threlte/core": "^8.3.1",
+		"@threlte/extras": "^9.7.1",
+		"@types/three": "^0.182.0",
+		"daisyui": "^5.5.14",
+		"lucide-svelte": "^0.563.0",
+		"motion": "^12.29.2",
+		"svelte": "^5.48.2",
+		"svelte-check": "^4.3.5",
+		"tailwindcss": "^4.1.18",
+		"three": "^0.182.0",
+		"typescript": "^5.9.3",
+		"vite": "^7.3.1"
+	}
+}
