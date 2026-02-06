@@ -1,5 +1,5 @@
 import { json, error } from '@sveltejs/kit';
-import { CHATBOT_API_KEY } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 import type { RequestHandler } from './$types';
 
 // Models ranked by quality (best first) for fallback
@@ -57,7 +57,7 @@ async function callGroqAPI(model: string, messages: Array<{ role: string, conten
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${CHATBOT_API_KEY}`
+            'Authorization': `Bearer ${env.CHATBOT_API_KEY}`
         },
         body: JSON.stringify({
             model,
@@ -71,7 +71,7 @@ async function callGroqAPI(model: string, messages: Array<{ role: string, conten
 }
 
 export const POST: RequestHandler = async ({ request }) => {
-    if (!CHATBOT_API_KEY) {
+    if (!env.CHATBOT_API_KEY) {
         console.error('CHATBOT_API_KEY is not configured');
         throw error(500, 'Chatbot is not configured');
     }
