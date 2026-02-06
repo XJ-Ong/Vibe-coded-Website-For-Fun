@@ -4,16 +4,22 @@
         drawnLines,
         generateLineId,
         gridScreenBounds,
-        type Point,
+        cameraStore,
+        cameraUpdateCounter,
+        screenToWorld,
+        worldToScreen,
+        type Point3D,
+        type Point2D,
         type DrawnLine,
         type GridBounds,
     } from "$lib/stores/drawingStore";
+    import type * as THREE from "three";
 
+    // State
     let isDrawing = $state(false);
-    let currentLine: Point[] = $state([]);
-    let drawingArea: HTMLDivElement;
+    let currentLine: Point3D[] = $state([]);
 
-    // Subscribe to stores
+    // Store subscriptions
     let isPenMode = $state(false);
     let lines: DrawnLine[] = $state([]);
     let gridBounds: GridBounds = $state({
@@ -22,99 +28,91 @@
         top: 0,
         bottom: 0,
     });
+    let camera: THREE.PerspectiveCamera | null = $state(null);
+    let updateCount = $state(0);
 
+    // Projected screen coordinates
+    let projectedLines: { id: string; points: Point2D[] }[] = $state([]);
+    let projectedCurrentLine: Point2D[] = $state([]);
+
+    // Subscribe to all stores
     $effect(() => {
-        const unsubPen = penMode.subscribe((v) => (isPenMode = v));
-        const unsubLines = drawnLines.subscribe((v) => (lines = v));
-        const unsubBounds = gridScreenBounds.subscribe((v) => (gridBounds = v));
-        return () => {
-            unsubPen();
-            unsubLines();
-            unsubBounds();
-        };
+        const subs = [
+            penMode.subscribe((v) => (isPenMode = v)),
+            drawnLines.subscribe((v) => (lines = v)),
+            gridScreenBounds.subscribe((v) => (gridBounds = v)),
+            cameraStore.subscribe((v) => (camera = v)),
+            cameraUpdateCounter.subscribe((v) => (updateCount = v)),
+        ];
+        return () => subs.forEach((unsub) => unsub());
     });
 
-    function getRelativePosition(e: MouseEvent): Point | null {
-        if (!drawingArea) return null;
-        const rect = drawingArea.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
+    // Re-project all lines when camera moves
+    $effect(() => {
+        if (!camera) return;
+        void updateCount;
 
-        // Check if within grid bounds (from 3D projection)
-        if (
-            e.clientX < gridBounds.left ||
-            e.clientX > gridBounds.right ||
-            e.clientY < gridBounds.top ||
-            e.clientY > gridBounds.bottom
-        ) {
-            return null;
+        projectedLines = lines.map((line) => ({
+            id: line.id,
+            points: line.points
+                .map((p) => worldToScreen(p, camera!))
+                .filter((p): p is Point2D => p !== null),
+        }));
+
+        projectedCurrentLine = currentLine
+            .map((p) => worldToScreen(p, camera!))
+            .filter((p): p is Point2D => p !== null);
+    });
+
+    // Helpers
+    function isWithinBounds(x: number, y: number): boolean {
+        return (
+            x >= gridBounds.left &&
+            x <= gridBounds.right &&
+            y >= gridBounds.top &&
+            y <= gridBounds.bottom
+        );
+    }
+
+    function getWorldPos(clientX: number, clientY: number): Point3D | null {
+        return camera ? screenToWorld(clientX, clientY, camera) : null;
+    }
+
+    function startDrawing(clientX: number, clientY: number) {
+        if (!isPenMode || !camera || !isWithinBounds(clientX, clientY)) return;
+        const pos = getWorldPos(clientX, clientY);
+        if (pos) {
+            isDrawing = true;
+            currentLine = [pos];
         }
-
-        return { x, y };
     }
 
-    function handleMouseDown(e: MouseEvent) {
-        if (!isPenMode) return;
-        // Only start drawing with primary button (left click)
-        if (e.button !== 0) return;
-
-        // Prevent default browser drag behavior (text selection, etc.)
-        e.preventDefault();
-
-        const pos = getRelativePosition(e);
-        if (!pos) return;
-
-        isDrawing = true;
-        currentLine = [pos];
-    }
-
-    function handleMouseMove(e: MouseEvent) {
-        if (!isPenMode || !isDrawing) return;
-
-        // Check if primary mouse button is still pressed (e.buttons uses bitmask, 1 = primary)
-        // This fixes the bug where rapid clicking causes isDrawing to get stuck
-        if ((e.buttons & 1) === 0) {
+    function continueDrawing(clientX: number, clientY: number) {
+        if (!isPenMode || !isDrawing || !camera) return;
+        if (!isWithinBounds(clientX, clientY)) {
             finishLine();
             return;
         }
-
-        const pos = getRelativePosition(e);
-        if (!pos) {
-            // If moved outside bounds, finish the current line
+        const pos = getWorldPos(clientX, clientY);
+        if (pos) {
+            currentLine = [...currentLine, pos];
+        } else {
             finishLine();
-            return;
         }
-
-        currentLine = [...currentLine, pos];
     }
 
     function finishLine() {
         if (currentLine.length > 1) {
             drawnLines.update((prev) => [
                 ...prev,
-                {
-                    id: generateLineId(),
-                    points: currentLine,
-                },
+                { id: generateLineId(), points: currentLine },
             ]);
         }
-
         isDrawing = false;
         currentLine = [];
     }
 
-    function handleMouseUp() {
-        if (!isPenMode || !isDrawing) return;
-        finishLine();
-    }
-
-    function handleMouseLeave() {
-        if (isDrawing) {
-            finishLine();
-        }
-    }
-
-    function pointsToPath(points: Point[]): string {
+    function pointsToPath(points: Point2D[]): string {
         if (points.length === 0) return "";
         const [first, ...rest] = points;
         return (
@@ -122,58 +120,77 @@
             rest.map((p) => `L ${p.x} ${p.y}`).join(" ")
         );
     }
+
+    // Mouse event handlers
+    function onMouseDown(e: MouseEvent) {
+        if (e.button !== 0) return;
+        e.preventDefault();
+        startDrawing(e.clientX, e.clientY);
+    }
+
+    function onMouseMove(e: MouseEvent) {
+        if ((e.buttons & 1) === 0) {
+            if (isDrawing) finishLine();
+            return;
+        }
+        continueDrawing(e.clientX, e.clientY);
+    }
+
+    function onMouseUp() {
+        if (isDrawing) finishLine();
+    }
+
+    // Touch event handlers (for mobile)
+    function onTouchStart(e: TouchEvent) {
+        if (!isPenMode || e.touches.length !== 1) return;
+        e.preventDefault();
+        const touch = e.touches[0];
+        startDrawing(touch.clientX, touch.clientY);
+    }
+
+    function onTouchMove(e: TouchEvent) {
+        if (!isDrawing || e.touches.length !== 1) return;
+        e.preventDefault();
+        const touch = e.touches[0];
+        continueDrawing(touch.clientX, touch.clientY);
+    }
+
+    function onTouchEnd() {
+        if (isDrawing) finishLine();
+    }
 </script>
 
-<!-- svelte-ignore a11y_no_noninteractive_element_interactions a11y_no_noninteractive_tabindex -->
+<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <div
-    bind:this={drawingArea}
     class="drawing-canvas"
     class:pen-mode={isPenMode}
-    onmousedown={handleMouseDown}
-    onmousemove={handleMouseMove}
-    onmouseup={handleMouseUp}
-    onmouseleave={handleMouseLeave}
+    onmousedown={onMouseDown}
+    onmousemove={onMouseMove}
+    onmouseup={onMouseUp}
+    onmouseleave={onMouseUp}
+    ontouchstart={onTouchStart}
+    ontouchmove={onTouchMove}
+    ontouchend={onTouchEnd}
+    ontouchcancel={onTouchEnd}
     role="application"
     aria-label="Drawing canvas"
 >
-    <!-- Visual grid boundary indicator in pen mode -->
     {#if isPenMode}
         <div
             class="grid-boundary"
-            style="
-                left: {gridBounds.left}px;
-                top: {gridBounds.top}px;
-                width: {gridBounds.right - gridBounds.left}px;
-                height: {gridBounds.bottom - gridBounds.top}px;
-            "
+            style="left:{gridBounds.left}px; top:{gridBounds.top}px; 
+                   width:{gridBounds.right - gridBounds.left}px; 
+                   height:{gridBounds.bottom - gridBounds.top}px"
         ></div>
     {/if}
 
     <svg width="100%" height="100%">
-        <!-- Saved lines -->
-        {#each lines as line (line.id)}
-            <path
-                d={pointsToPath(line.points)}
-                fill="none"
-                stroke="#39ff14"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                opacity="0.8"
-            />
+        {#each projectedLines as line (line.id)}
+            <path d={pointsToPath(line.points)} class="drawing-line" />
         {/each}
 
-        <!-- Current drawing line -->
-        {#if currentLine.length > 0}
-            <path
-                d={pointsToPath(currentLine)}
-                fill="none"
-                stroke="#39ff14"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                opacity="0.8"
-            />
+        {#if projectedCurrentLine.length > 0}
+            <path d={pointsToPath(projectedCurrentLine)} class="drawing-line" />
         {/if}
     </svg>
 </div>
@@ -181,19 +198,16 @@
 <style>
     .drawing-canvas {
         position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
+        inset: 0;
         z-index: 5;
         pointer-events: none;
+        touch-action: none; /* Prevent scroll/zoom while drawing */
     }
 
     .drawing-canvas.pen-mode {
         pointer-events: auto;
         cursor: crosshair;
         user-select: none;
-        -webkit-user-select: none;
     }
 
     .drawing-canvas svg {
@@ -201,10 +215,18 @@
         height: 100%;
     }
 
+    .drawing-line {
+        fill: none;
+        stroke: #39ff14;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        opacity: 0.8;
+    }
+
     .grid-boundary {
         position: absolute;
         border: 1px dashed rgba(112, 0, 223, 0.4);
         pointer-events: none;
-        box-sizing: border-box;
     }
 </style>

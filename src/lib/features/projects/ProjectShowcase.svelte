@@ -18,11 +18,11 @@
                  flex flex-col h-full"
         >
           <div class="aspect-video bg-charcoal rounded-lg mb-4 overflow-hidden">
-            <div
-              class="w-full h-full flex items-center justify-center text-cool-grey font-mono text-sm"
-            >
-              [ {project.title} Screenshot ]
-            </div>
+            <img
+              src={project.image}
+              alt={project.title}
+              class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            />
           </div>
 
           <h3
@@ -51,6 +51,8 @@
 
             <a
               href={project.link}
+              target="_blank"
+              rel="noopener noreferrer"
               class="inline-flex items-center gap-2 text-sm font-mono text-cyber-blue
                      hover:underline underline-offset-4"
             >
